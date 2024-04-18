@@ -3,6 +3,9 @@
     session_start();
     include('../assets/bdd/bdd.php');
 
+    // Désactivation de l'affichage des erreurs
+    // ini_set('display_errors', 0);
+    // ini_set('display_startup_errors', 0);
     error_reporting(E_ALL);
 
 ?>
@@ -18,7 +21,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     
-    <title>Login / Register</title>
+    <title>Login / Register corrige</title>
 </head>
 <body>
     <h1 style="margin-bottom: 20px">Bienvenue sur l'application vulnérable</h1>
@@ -91,12 +94,14 @@
     if (isset($_POST['register_user'])) {
         $name = $_POST['name'];
         $email = $_POST['email'];
-        $password = md5($_POST['password']);
+        $password = password_hash($_POST['password'], PASSWORD_DEFAULT); // Sécurisation du hachage du mot de passe
 
-        $query_insert_users = "INSERT INTO users (name, email, password) VALUES ('$name', '$email', '$password')";
+        $query_insert_users = "INSERT INTO users (name, email, password) VALUES (:name, :email, :password)";
 
         $Ores = $Bdd->prepare($query_insert_users);
-
+        $Ores->bindParam(':name', $name);
+        $Ores->bindParam(':email', $email);
+        $Ores->bindParam(':password', $password);
         $result = $Ores->execute();
 
         if ($result) {
@@ -110,11 +115,9 @@
                     confirmButtonText: 'OK',
                     confirmButtonColor: '#00a8ff',
                     showLoaderOnConfirm: true,
-                }).then((result) => {
-                    if (result.value) {
-                        window.location.href = 'login.php';
-                    }
-                });
+                }).then(() => 
+                    window.location.href = 'home.php')
+                );
             </script>
             ";
         } else {
@@ -128,11 +131,9 @@
                         confirmButtonText: 'OK',
                         confirmButtonColor: '#red',
                         showLoaderOnConfirm: true,  
-                    }).then((result) => {
-                        if (result.value) {
-                            window.location.href = 'login.php';
-                        }
-                    });
+                    }).then(() => 
+                        window.location.href = '')
+                    );
                 </script>
             ";
         }
@@ -140,20 +141,19 @@
 
     if (isset($_POST['login_user'])) {
         $email = $_POST['email'];
-        $password = md5($_POST['password']);
+        $password = $_POST['password'];
 
-        $query_login = "SELECT * FROM users WHERE email = :email AND password = :password";
+        $query_login = "SELECT * FROM users WHERE email = :email";
+
         $Ores = $Bdd->prepare($query_login);
         $Ores->bindParam(':email', $email);
-        $Ores->bindParam(':password', $password);
         $Ores->execute();
         $result = $Ores->fetch(PDO::FETCH_ASSOC);
-    
-        if ($result) {
-            // Utilisateur trouvé, vérifie le mot de passe
-            if ($result['password'] == $password) {
-                $_SESSION['user_id'] = $result['id'];
-                $_SESSION['user_name'] = $result['name'];
+
+        if ($result && password_verify($password, $result['password'])) {
+            // Le mot de passe est correct
+            $_SESSION['user_id'] = $result['id_users'];
+            $_SESSION['user_name'] = $result['name'];
                 echo "
                 <script>
                     Swal.fire({
@@ -161,19 +161,17 @@
                         icon: 'success',
                         confirmButtonText: 'Continuer',
                         confirmButtonColor: '#00a8ff',
-                    }).then((result) => {
-                        if (result.value) {
-                            window.location.href = 'home.php';
-                        }
-                    });
+                    }).then(() => 
+                        window.location.href = 'home.php')
+                    );
                 </script>
                 ";
             } else {
-                // Mot de passe incorrect
+                // Erreur d'identifiants
                 echo "
                 <script>
                     Swal.fire({
-                        title: 'Mot de passe incorrect !',
+                        title: 'Identifiants incorrects !',
                         icon: 'error',
                         confirmButtonText: 'Réessayer',
                         confirmButtonColor: '#ff7675'
@@ -181,19 +179,6 @@
                 </script>
                 ";
             }
-        } else {
-            // Email non trouvé
-            echo "
-            <script>
-                Swal.fire({
-                    title: 'Aucun compte trouvé avec cet email',
-                    icon: 'error',
-                    confirmButtonText: 'Réessayer',
-                    confirmButtonColor: '#ff7675'
-                });
-            </script>
-            ";
-        }
-    }    
+        }  
     
 ?>
