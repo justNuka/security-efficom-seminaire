@@ -3,6 +3,8 @@
     session_start();
     include('../assets/bdd/bdd.php');
 
+    ini_set('display_errors', 1);
+    ini_set('display_startup_errors', 1);
     error_reporting(E_ALL);
 
 ?>
@@ -13,7 +15,7 @@
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <link rel="stylesheet" href="../css/login.css">
+    <link rel="stylesheet" href="../css/login.css?<?php echo time(); ?>">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -21,7 +23,7 @@
     <title>Login / Register</title>
 </head>
 <body>
-    <h1 style="margin-bottom: 20px">Bienvenue sur l'application vulnérable</h1>
+    <h1 style="margin-bottom: 20px">Bienvenue sur Vulnerable App</h1>
     <div class="container" id="container">
         <div class="form-container sign-up-container">
             <form action="" method="POST">
@@ -148,12 +150,13 @@
         $Ores->bindParam(':password', $password);
         $Ores->execute();
         $result = $Ores->fetch(PDO::FETCH_ASSOC);
-    
-        if ($result) {
+
+        if ($result['email']) {
             // Utilisateur trouvé, vérifie le mot de passe
             if ($result['password'] == $password) {
-                $_SESSION['user_id'] = $result['id'];
+                $_SESSION['user_id'] = $result['id_user'];
                 $_SESSION['user_name'] = $result['name'];
+                $_SESSION['user_email'] = $result['email'];
                 echo "
                 <script>
                     Swal.fire({
