@@ -4,6 +4,7 @@
     include('../assets/bdd/bdd.php');
 
     error_reporting(E_ALL);
+    ini_set('display_errors', 1);
 
 ?>
 
@@ -104,6 +105,7 @@
             <script>
                 Swal.fire({
                     title: 'Inscription réussie !',
+                    text: 'Vous pouvez maintenant vous connecter',
                     allowEscapeKey: false,
                     allowOutsideClick: false,
                     icon: 'success',
@@ -142,17 +144,15 @@
         $email = $_POST['email'];
         $password = md5($_POST['password']);
 
-        $query_login = "SELECT * FROM users WHERE email = :email AND password = :password";
+        $query_login = "SELECT * FROM users WHERE email = '$email' AND password = '$password'";
         $Ores = $Bdd->prepare($query_login);
-        $Ores->bindParam(':email', $email);
-        $Ores->bindParam(':password', $password);
         $Ores->execute();
         $result = $Ores->fetch(PDO::FETCH_ASSOC);
     
         if ($result) {
-            // Utilisateur trouvé, vérifie le mot de passe
+            print_r($result);
             if ($result['password'] == $password) {
-                $_SESSION['user_id'] = $result['id'];
+                $_SESSION['user_id'] = $result['id_users'];
                 $_SESSION['user_name'] = $result['name'];
                 echo "
                 <script>
